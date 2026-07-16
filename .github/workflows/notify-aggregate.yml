@@ -1,0 +1,17 @@
+name: Notify aggregate repo
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger bump in camofox-opencli
+        run: |
+          curl -fsSL -X POST \
+            -H "Authorization: token ${{ secrets.AGGREGATE_DISPATCH_TOKEN }}" \
+            -H "Accept: application/vnd.github+json" \
+            https://api.github.com/repos/Fectivnfy112357/camofox-opencli/dispatches \
+            -d "{\"event_type\": \"opencli-updated\", \"client_payload\": {\"opencli_sha\": \"${{ github.sha }}\"}}"
