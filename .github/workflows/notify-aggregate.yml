@@ -9,9 +9,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Trigger bump in camofox-opencli
+        if: ${{ secrets.AGGREGATE_DISPATCH_TOKEN != '' }}
         run: |
           curl -fsSL -X POST \
             -H "Authorization: token ${{ secrets.AGGREGATE_DISPATCH_TOKEN }}" \
             -H "Accept: application/vnd.github+json" \
             https://api.github.com/repos/Fectivnfy112357/camofox-opencli/dispatches \
             -d "{\"event_type\": \"opencli-updated\", \"client_payload\": {\"opencli_sha\": \"${{ github.sha }}\"}}"
+      - name: Skip notice (no PAT configured)
+        if: ${{ secrets.AGGREGATE_DISPATCH_TOKEN == '' }}
+        run: |
+          echo "::notice::AGGREGATE_DISPATCH_TOKEN not set — camofox-opencli submodule bump will happen via the daily cron in bump-submodules.yml."
