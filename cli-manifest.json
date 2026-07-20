@@ -6491,7 +6491,7 @@
   {
     "site": "chatgpt",
     "name": "model",
-    "description": "Switch ChatGPT web intelligence level (fast, balanced, advanced, very-high, pro)",
+    "description": "Switch ChatGPT web model or intelligence level (GPT-5.6 Pro, fast, balanced, advanced, very-high, pro)",
     "access": "write",
     "domain": "chatgpt.com",
     "strategy": "cookie",
@@ -6502,7 +6502,7 @@
         "type": "str",
         "required": true,
         "positional": true,
-        "help": "Intelligence level to switch to",
+        "help": "ChatGPT model or intelligence level to switch to",
         "choices": [
           "fast",
           "speed",
@@ -6522,6 +6522,14 @@
           "x-high",
           "extra-high",
           "超高",
+          "gpt-5.6-pro",
+          "gpt-5-6-pro",
+          "gpt-5.6-sol-pro",
+          "gpt-5-6-sol-pro",
+          "gpt-5.6",
+          "gpt-5-6",
+          "5.6-pro",
+          "5.6",
           "pro",
           "professional",
           "专业"
@@ -12596,7 +12604,7 @@
         "type": "string",
         "default": "turnover",
         "required": false,
-        "help": "排序：turnover / change / drop / price / premium"
+        "help": "排序：turnover / change / drop / price / premium / value / put-trigger"
       },
       {
         "name": "limit",
@@ -12619,8 +12627,8 @@
       "convPrice",
       "convValue",
       "convPremiumPct",
-      "remainingYears",
-      "ytm",
+      "pureBondPremiumPct",
+      "putTriggerPrice",
       "listDate"
     ],
     "type": "js",
@@ -14631,6 +14639,59 @@
     "type": "js",
     "modulePath": "github-trending/repos.js",
     "sourceFile": "github-trending/repos.js"
+  },
+  {
+    "site": "google",
+    "name": "images",
+    "description": "Search Google Images for photos and image results",
+    "access": "read",
+    "domain": "google.com",
+    "strategy": "public",
+    "browser": true,
+    "args": [
+      {
+        "name": "keyword",
+        "type": "str",
+        "required": true,
+        "positional": true,
+        "help": "Image search query"
+      },
+      {
+        "name": "limit",
+        "type": "int",
+        "default": 20,
+        "required": false,
+        "help": "Number of image results (1-100)"
+      },
+      {
+        "name": "lang",
+        "type": "str",
+        "default": "en",
+        "required": false,
+        "help": "Language short code (e.g. en, zh)"
+      },
+      {
+        "name": "resolve",
+        "type": "bool",
+        "default": true,
+        "required": false,
+        "help": "Click image previews to resolve original imgurl values"
+      }
+    ],
+    "columns": [
+      "rank",
+      "title",
+      "imageUrl",
+      "thumbnailUrl",
+      "sourceUrl",
+      "source",
+      "width",
+      "height"
+    ],
+    "type": "js",
+    "modulePath": "google/images.js",
+    "sourceFile": "google/images.js",
+    "navigateBefore": false
   },
   {
     "site": "google",
@@ -30131,7 +30192,8 @@
       "likes",
       "time",
       "is_reply",
-      "reply_to"
+      "reply_to",
+      "images"
     ],
     "type": "js",
     "modulePath": "rednote/comments.js",
@@ -34192,9 +34254,9 @@
     "name": "hot-rank",
     "description": "同花顺热股榜",
     "access": "read",
-    "domain": "eq.10jqka.com.cn",
-    "strategy": "cookie",
-    "browser": true,
+    "domain": "dq.10jqka.com.cn",
+    "strategy": "public",
+    "browser": false,
     "args": [
       {
         "name": "limit",
@@ -34213,8 +34275,7 @@
     ],
     "type": "js",
     "modulePath": "ths/hot-rank.js",
-    "sourceFile": "ths/hot-rank.js",
-    "navigateBefore": true
+    "sourceFile": "ths/hot-rank.js"
   },
   {
     "site": "tieba",
@@ -35046,6 +35107,46 @@
     "navigateBefore": false,
     "siteSession": "persistent",
     "defaultWindowMode": "foreground"
+  },
+  {
+    "site": "toutiao",
+    "name": "recommend",
+    "description": "今日头条频道推荐流（公开 API，无需登录）",
+    "access": "read",
+    "domain": "www.toutiao.com",
+    "strategy": "public",
+    "browser": false,
+    "args": [
+      {
+        "name": "category",
+        "type": "string",
+        "default": "__all__",
+        "required": false,
+        "help": "频道 (__all__, news_tech, news_finance, news_world, news_sports, news_entertainment, news_military)"
+      },
+      {
+        "name": "limit",
+        "type": "int",
+        "default": 20,
+        "required": false,
+        "help": "返回条数 (1-50)"
+      }
+    ],
+    "columns": [
+      "rank",
+      "group_id",
+      "title",
+      "abstract",
+      "source",
+      "tag",
+      "comments",
+      "published_at",
+      "url",
+      "image_url"
+    ],
+    "type": "js",
+    "modulePath": "toutiao/recommend.js",
+    "sourceFile": "toutiao/recommend.js"
   },
   {
     "site": "toutiao",
@@ -41485,7 +41586,8 @@
       "likes",
       "time",
       "is_reply",
-      "reply_to"
+      "reply_to",
+      "images"
     ],
     "type": "js",
     "modulePath": "xiaohongshu/comments.js",
