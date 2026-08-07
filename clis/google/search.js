@@ -129,7 +129,13 @@ cli({
         return {items: results};
       })()
     `);
-        const results = (wrapper && wrapper.items) || [];
+        const raw = (wrapper && wrapper.items) || [];
+        // Drop rows without a usable URL — Google SERP occasionally yields a
+        // "People Also Ask" question (and a few featured-snippet variants) with
+        // an empty `url`. They have no link to follow, so consumers that route
+        // by URL treat them as broken rows. Filtering at the source keeps the
+        // shape consistent with the rest of the codebase (url is a real link).
+        const results = raw.filter((r) => r && typeof r.url === 'string' && r.url.length > 0);
         if (results.length === 0) {
             throw new CliError('NOT_FOUND', 'No search results found', 'Try a different keyword or check for CAPTCHA');
         }
