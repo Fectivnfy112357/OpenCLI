@@ -404,10 +404,17 @@ function buildApplySearchFiltersJs(requestedFilters) {
           }
           const options = visibleMatches(groups[0], '.tag-container > .tags')
             .filter((option) => text(option) === request.option);
-          if (options.length !== 1) {
-            return { status: 'layout', detail: options.length ? 'ambiguous_option' : 'option_not_found' };
+          // Current XHS renders a focus/measurement clone next to several
+          // visual chips. Both copies have the same text and non-zero
+          // geometry, but the clone is marked tabindex=-1. Treat that clone
+          // as implementation detail while still failing closed when there
+          // are genuinely multiple interactive options.
+          const interactiveOptions = options.filter((option) => option.getAttribute('tabindex') !== '-1');
+          const candidates = interactiveOptions.length > 0 ? interactiveOptions : options;
+          if (candidates.length !== 1) {
+            return { status: 'layout', detail: candidates.length ? 'ambiguous_option' : 'option_not_found' };
           }
-          return { status: 'ok', option: options[0] };
+          return { status: 'ok', option: candidates[0] };
         };
         const isActive = (option) => option.classList.contains('active');
         const ready = () => visibleMatches(document, 'section.note-item, section:has(a[href*="/search_result/"]), section:has(a[href*="/explore/"]), .search-empty-wrapper').length > 0;

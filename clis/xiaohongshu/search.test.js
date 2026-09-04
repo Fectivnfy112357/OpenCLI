@@ -149,6 +149,9 @@ function createFilterBehaviorPage(options = {}) {
                 for (let copy = 0; copy < copies; copy++) {
                     const option = document.createElement('div');
                     option.className = `tags${state[groupLabel] === choice ? ' active' : ''}`;
+                    if (options.semanticClone === `${groupLabel}/${choice}` && copy === 0) {
+                        option.setAttribute('tabindex', '-1');
+                    }
                     const optionLabel = document.createElement('span');
                     optionLabel.textContent = choice;
                     option.append(optionLabel);
@@ -716,6 +719,22 @@ describe('xiaohongshu search filter behavior', () => {
                 code: 'COMMAND_EXEC',
                 message: expect.stringContaining('account-scoped filter was unavailable'),
             });
+        }
+        finally {
+            vi.useRealTimers();
+        }
+    });
+
+    it('ignores a visible tabindex=-1 semantic clone of the same filter option', async () => {
+        vi.useFakeTimers();
+        try {
+            const page = createFilterBehaviorPage({
+                ambiguous: '排序依据/最新',
+                semanticClone: '排序依据/最新',
+            });
+            const result = await runFilterCommand(page, { sort: 'latest' });
+            expect(result[0].title).toBe('最新');
+            expect(page.filterClicks).toEqual(['排序依据/最新']);
         }
         finally {
             vi.useRealTimers();

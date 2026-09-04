@@ -95,12 +95,43 @@ cli({
         const resultType = ${JSON.stringify(resultType)};
         const maxPages = ${MAX_PAGES};
         const requestTimeoutMs = ${REQUEST_TIMEOUT_SECONDS * 1000};
+
+        const currentUrl = String(window.location?.href || '');
+        const trafficInterstitial = window.location?.hostname === 'www.google.com' &&
+          window.location?.pathname?.startsWith('/sorry/');
+        if (trafficInterstitial) {
+          return {
+            error: 'environment-block',
+            message: 'YouTube search was blocked by Google unusual traffic verification; change or stabilize the server egress IP, then complete the verification in the same browser profile before retrying.',
+            url: currentUrl,
+          };
+        }
+
+        // Wait for YouTube's bootstrap data to be injected by the SPA.
+        // Fixed waitForTimeout on the Node side (page.wait(3)) is unreliable
+        // over slow proxy tunnels — ytInitialData sometimes lands well after
+        // the 3-second window, producing spurious 'not found' failures. Poll
+        // inside the page context up to 15s so slow networks self-heal
+        // instead of erroring out.
+        const bootstrapDeadline = Date.now() + 15000;
+        while (Date.now() < bootstrapDeadline) {
+          const cfg = window.ytcfg?.data_ || {};
+          if (cfg.INNERTUBE_API_KEY && cfg.INNERTUBE_CONTEXT && window.ytInitialData) {
+            break;
+          }
+          await new Promise(r => setTimeout(r, 250));
+        }
+
         const cfg = window.ytcfg?.data_ || {};
         const apiKey = cfg.INNERTUBE_API_KEY;
         const context = cfg.INNERTUBE_CONTEXT;
         const initialData = window.ytInitialData;
         if (!apiKey || !context || !initialData) {
-          return { error: 'config', message: 'YouTube search bootstrap data not found' };
+          return {
+            error: 'config',
+            message: 'YouTube search bootstrap data not found on the loaded YouTube page; the page may be incomplete or intercepted by a consent/security screen.',
+            url: currentUrl,
+          };
         }
         const signedIn = cfg.LOGGED_IN === true || window.ytcfg?.get?.('LOGGED_IN') === true;
 

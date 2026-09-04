@@ -19,7 +19,7 @@ function response(payload, { status = 200, jsonError } = {}) {
     };
 }
 
-function makePage({ initialData, responses = [], cookies, loggedIn = true, fetchImpl } = {}) {
+function makePage({ initialData, responses = [], cookies, loggedIn = true, fetchImpl, blocked = false } = {}) {
     const fetchMock = fetchImpl || vi.fn().mockImplementation(async () => responses.shift());
     return {
         goto: vi.fn().mockResolvedValue(undefined),
@@ -29,9 +29,17 @@ function makePage({ initialData, responses = [], cookies, loggedIn = true, fetch
             const previousWindow = globalThis.window;
             const previousFetch = globalThis.fetch;
             globalThis.window = {
-                ytInitialData: initialData ?? payload([]),
+                ytInitialData: blocked ? undefined : initialData ?? payload([]),
+                location: {
+                    href: blocked
+                        ? 'https://www.google.com/sorry/index?continue=https://www.youtube.com/results'
+                        : 'https://www.youtube.com/results?search_query=test',
+                    hostname: blocked ? 'www.google.com' : 'www.youtube.com',
+                    pathname: blocked ? '/sorry/index' : '/results',
+                },
+                document: undefined,
                 ytcfg: {
-                    data_: {
+                    data_: blocked ? {} : {
                         INNERTUBE_API_KEY: 'test-key',
                         INNERTUBE_CONTEXT: { client: { clientName: 'WEB', clientVersion: '1.0' } },
                         LOGGED_IN: loggedIn,
@@ -344,6 +352,15 @@ describe('youtube search', () => {
         });
         await expect(getRegistry().get('youtube/search').func(page, { query: 'test', limit: 2 }))
             .rejects.toBeInstanceOf(CommandExecutionError);
+    });
+
+    it('reports Google unusual-traffic interstitials as an environment block, not missing bootstrap data', async () => {
+        const page = makePage({ blocked: true });
+        await expect(getRegistry().get('youtube/search').func(page, { query: 'test', limit: 2 }))
+            .rejects.toMatchObject({
+                code: 'COMMAND_EXEC',
+                message: expect.stringContaining('unusual traffic'),
+            });
     });
 
     it('maps a signed-out HTTP 403 to CommandExecutionError instead of an auth failure', async () => {
